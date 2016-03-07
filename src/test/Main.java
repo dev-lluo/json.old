@@ -1,5 +1,6 @@
 package test;
 
+import top.flyfire.json.JsonPointer;
 import top.flyfire.json.resolver.JsonData;
 
 /**
@@ -7,11 +8,11 @@ import top.flyfire.json.resolver.JsonData;
  */
 public class Main {
     public static void main(String[] args){
-        JsonData jsonData = new JsonData();
-        for(int i = 0;i<1000;i++) {
-            jsonData.append("dafsdfafs");
+        JsonData jsonData = new JsonData("{a:'123'}");
+        JsonData.JsonDataPeeker peeker = jsonData.peeker();
+        if(JsonPointer.isObject(peeker.peek())){
+            peeker.startObject();
+            peeker.endObject();
         }
-        System.out.println(jsonData.length());
-        System.out.println(jsonData);
     }
 }

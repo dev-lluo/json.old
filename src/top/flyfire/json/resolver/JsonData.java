@@ -1,7 +1,8 @@
 package top.flyfire.json.resolver;
 
-import top.flyfire.json.JsonConst;
+import top.flyfire.json.JsonPointer;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
+import top.flyfire.json.resolver.exception.UnExpectStructExpection;
 
 /**
  * Created by flyfire[dev.lluo@outlook.com] on 2016/3/6.
@@ -41,6 +42,11 @@ public class JsonData {
 
     public JsonData append(JsonData jsonData){
         this.append(jsonData.value);
+        return this;
+    }
+
+    public JsonData append(char cell){
+        this.append(new char[]{cell});
         return this;
     }
 
@@ -93,21 +99,77 @@ public class JsonData {
     }
 
 
+    private class Stack {
+        StackCell pointer;
+
+        public void pop(int value){
+            if(this.isEmpty()){
+                throw new UnExpectStructExpection(value);
+            }else if(pointer.value==value){
+                pointer = pointer.next;
+            }else{
+                throw new UnExpectStructExpection(value);
+            }
+        }
+
+        public void push(int value){
+            pointer = new StackCell(value,pointer);
+        }
+
+        public boolean isEmpty(){
+            return pointer == null;
+        }
+    }
+
+    private class StackCell{
+        private int value;
+        private StackCell next;
+
+        private  StackCell(int value,StackCell next){
+            this.value = value;
+            this.next = next;
+        }
+    }
     public class JsonDataPeeker {
         private int destPos;
+        private Stack stack ;
         public JsonDataPeeker(){
             this.destPos = 0;
+            this.stack = new Stack();
         }
 
         public int peek(){
             char dest = JsonData.this.value[destPos];
-            if(JsonConst.isArrayStart(dest)){
-                return JsonConst.ARRAY;
-            }else if(JsonConst.isObjectStart(dest)){
-                return JsonConst.OBJECT;
+            if(JsonPointer.isArrayStart(dest)){
+                return JsonPointer.ARRAY;
+            }else if(JsonPointer.isObjectStart(dest)){
+                return JsonPointer.OBJECT;
             }else{
-                return JsonConst.PRIMITIVE;
+                return JsonPointer.PRIMITIVE;
             }
+        }
+
+        private void roll(){
+            this.destPos++;
+        }
+
+        public void startObject(){
+            this.stack.push(JsonPointer.OBJECT);
+        }
+
+        public String readProperty(){
+            JsonData jsonData = new JsonData();
+            this.roll();
+
+            return jsonData.toString();
+        }
+
+        public String readValue(){
+            return null;
+        }
+
+        public void endObject(){
+            this.stack.pop(JsonPointer.OBJECT);
         }
 
     }
