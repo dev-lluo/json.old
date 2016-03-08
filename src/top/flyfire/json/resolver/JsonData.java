@@ -1,6 +1,8 @@
 package top.flyfire.json.resolver;
 
+import top.flyfire.json.EscapeUtil;
 import top.flyfire.json.JsonPointer;
+import top.flyfire.json.JsonSign;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.resolver.exception.UnExpectStructExpection;
 
@@ -59,6 +61,10 @@ public class JsonData {
         return this.length;
     }
 
+    public boolean isEmpty(){
+        return this.length==0;
+    }
+
     @Override
     public String toString() {
         return new String(this.value,0,this.length);
@@ -104,11 +110,19 @@ public class JsonData {
 
         public void pop(int value){
             if(this.isEmpty()){
-                throw new UnExpectStructExpection(value);
+                throw new UnExpectStructExpection(-1,value);
             }else if(pointer.value==value){
                 pointer = pointer.next;
             }else{
-                throw new UnExpectStructExpection(value);
+                throw new UnExpectStructExpection(pointer.value,value);
+            }
+        }
+
+        public int peek(){
+            if(this.isEmpty()){
+                return -1;
+            }else{
+                return this.pointer.value;
             }
         }
 
@@ -134,17 +148,21 @@ public class JsonData {
         private int destPos;
         private Stack stack ;
         public JsonDataPeeker(){
-            this.destPos = 0;
+            this.destPos = -1;
             this.stack = new Stack();
         }
 
         public int peek(){
+            this.roll();
             char dest = JsonData.this.value[destPos];
-            if(JsonPointer.isArrayStart(dest)){
+            if(JsonSign.isArrayStart(dest)){
+                this.back();
                 return JsonPointer.ARRAY;
-            }else if(JsonPointer.isObjectStart(dest)){
+            }else if(JsonSign.isObjectStart(dest)){
+                this.back();
                 return JsonPointer.OBJECT;
             }else{
+                this.back();
                 return JsonPointer.PRIMITIVE;
             }
         }
@@ -153,19 +171,160 @@ public class JsonData {
             this.destPos++;
         }
 
+        private void back(){
+            this.destPos--;
+        }
+
+
+        public String readPrimitive(){
+            JsonData jsonData = new JsonData();
+            while(this.destPos<JsonData.this.length) {
+                this.roll();
+                char dest = JsonData.this.value[destPos];
+                int pointer = stack.peek();
+
+                if(JsonPointer.isEscape(pointer)){//如果前置指针为转义 ；则判断当前符号能不能进行转义；不能则抛出异常；能则转义拼接
+                    if(EscapeUtil.canEsc(dest)){
+                        stack.pop(pointer);
+                        jsonData.append(EscapeUtil.esc(dest));
+                    }else{
+                        throw new RuntimeException("unknown escape[\\"+dest+"]");
+                    }
+                }else if(JsonPointer.isSQuote(pointer)){//如果前置指针为单引号
+                    if(JsonSign.isSQuote(dest)){//且当前目标符号为单引号；则Primitive结束读取;否则拼接
+                        stack.pop(pointer);
+                        break;
+                    }else{
+                        jsonData.append(dest);
+                    }
+                }else if(JsonPointer.isDQuote(pointer)){//如果前置指针为双引号
+                    if(JsonSign.isDQuote(dest)){//且当前目标符号为双引号；则Primitive结束读取;否则拼接
+                        stack.pop(pointer);
+                        break;
+                    }else{
+                        jsonData.append(dest);
+                    }
+                }else{
+                    if(jsonData.isEmpty()) {
+                        if (JsonSign.isSQuote(dest)) {
+                            stack.push(JsonPointer.S_QUOTE);
+                        } else if (JsonSign.isDQuote(dest)) {
+                            stack.push(JsonPointer.D_QOUTE);
+                        } else if (JsonSign.isColon(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isObjectEnd(dest)||JsonSign.isArrayStart(dest)||JsonSign.isArrayEnd(dest)) {//Primitive不允许以Json结构关键或转义字符开始
+                            throw new UnExpectStructExpection("primitive["+jsonData+"] start with ["+dest+"] ???");
+                        } else {
+                            jsonData.append(dest);
+                        }
+                    }else{
+                        if (JsonSign.isSQuote(dest)||JsonSign.isDQuote(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isArrayStart(dest)) {//无结构的Primitive不允许包含Json结构开始关键或转义字符
+                            throw new UnExpectStructExpection("non-struct primitive["+jsonData+"] include ["+dest+"] ???");
+                        } else if (JsonSign.isComma(dest)) {//无结构的Primitive遇到逗号；标识结束
+                            this.back();
+                            break;
+                        } else if((JsonPointer.isObject(pointer)&&JsonSign.isObjectEnd(dest))||(JsonPointer.isArray(pointer)&&JsonSign.isArrayEnd(dest))){//无结构的Primitive遇到当前父结构结束标记；标识结束
+                            this.back();
+                            break;
+                        } else {
+                            jsonData.append(dest);
+                        }
+                    }
+                }
+
+            }
+            return jsonData.toString();
+        }
+
         public void startObject(){
+            this.roll();
             this.stack.push(JsonPointer.OBJECT);
         }
 
         public String readProperty(){
             JsonData jsonData = new JsonData();
-            this.roll();
+            while(this.destPos<JsonData.this.length) {
+                this.roll();
+                char dest = JsonData.this.value[destPos];
+                int pointer = stack.peek();
 
+                if(JsonPointer.isEscape(pointer)){//如果前置指针为转义 ；则判断当前符号能不能进行转义；不能则抛出异常；能则转义拼接
+                    if(EscapeUtil.canEsc(dest)){
+                        stack.pop(pointer);
+                        jsonData.append(EscapeUtil.esc(dest));
+                    }else{
+                        throw new RuntimeException("unknown escape[\\"+dest+"]");
+                    }
+                }else if(JsonPointer.isSQuote(pointer)){//如果前置指针为单引号
+                    if(JsonSign.isSQuote(dest)){//且当前目标符号为单引号；则Property结束读取;否则拼接
+                        stack.pop(pointer);
+                        break;
+                    }else{
+                        jsonData.append(dest);
+                    }
+                }else if(JsonPointer.isDQuote(pointer)){//如果前置指针为双引号
+                    if(JsonSign.isDQuote(dest)){//且当前目标符号为双引号；则Property结束读取;否则拼接
+                        stack.pop(pointer);
+                        break;
+                    }else{
+                        jsonData.append(dest);
+                    }
+                }else{
+                    if(jsonData.isEmpty()) {
+                        if (JsonSign.isSQuote(dest)) {
+                            stack.push(JsonPointer.S_QUOTE);
+                        } else if (JsonSign.isDQuote(dest)) {
+                            stack.push(JsonPointer.D_QOUTE);
+                        } else if (JsonSign.isColon(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isObjectEnd(dest)||JsonSign.isArrayStart(dest)||JsonSign.isArrayEnd(dest)) {//Property不允许以Json结构关键或转义字符开始
+                            throw new UnExpectStructExpection("property start with ["+dest+"] ???");
+                        } else {
+                            jsonData.append(dest);
+                        }
+                    }else{
+                        if (JsonSign.isSQuote(dest)||JsonSign.isDQuote(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isObjectEnd(dest)||JsonSign.isArrayStart(dest)||JsonSign.isArrayEnd(dest)) {//无结构的Property不允许包含Json结构关键或转义字符
+                            throw new UnExpectStructExpection("non-struct property include ["+dest+"] ???");
+                        } else if (JsonSign.isColon(dest)) {//无结构的Property遇到冒号；标识结束
+                            this.back();
+                            break;
+                        } else {
+                            jsonData.append(dest);
+                        }
+                    }
+                }
+
+            }
             return jsonData.toString();
         }
 
         public String readValue(){
-            return null;
+            JsonData jsonData = new JsonData();
+            this.roll();
+            char dest = JsonData.this.value[destPos];
+            if(JsonSign.isColon(dest)){
+                int pointer = this.peek();
+                if(JsonPointer.isObject(pointer)){
+                    this.startObject();
+                    System.out.println(this.readProperty());
+                    System.out.println(this.readValue());
+                    this.endObject();
+                }else if(JsonPointer.isPrimitive(pointer)){
+                    System.out.println(this.readPrimitive());
+                }
+            }else{
+                throw new UnExpectStructExpection("please insert colon between property and value...");
+            }
+
+            return jsonData.toString();
+        }
+
+        public boolean hasNextObjectElement(){
+            this.roll();
+            char dest = JsonData.this.value[destPos];
+            if(JsonSign.isObjectEnd(dest)){
+                return false;
+            }else if(JsonSign.isComma(dest)){
+                return true;
+            }else{
+                throw new UnExpectStructExpection();
+            }
         }
 
         public void endObject(){

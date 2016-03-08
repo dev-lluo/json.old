@@ -10,7 +10,11 @@ public class UnExpectStructExpection extends JsonException {
         super();
     }
 
-    public UnExpectStructExpection(int pointer) {
-        super("UnExpectStructExpection["+pointer+"]");
+    public UnExpectStructExpection(int expect,int pointer) {
+        super("UnExpectStructExpection[expect:"+expect+" , pointer:"+pointer+"]");
+    }
+
+    public UnExpectStructExpection(String message) {
+        super(message);
     }
 }

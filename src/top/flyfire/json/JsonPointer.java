@@ -4,24 +4,6 @@ package top.flyfire.json;
  * Created by flyfire[dev.lluo@outlook.com] on 2016/3/6.
  */
 public interface JsonPointer {
-    char ARRAY_START = '[';
-    static boolean isArrayStart(char ch){
-        return ARRAY_START == ch;
-    }
-
-    char ARRAY_END = ']';
-    static boolean isArrayEnd(char ch){
-        return ARRAY_END == ch;
-    }
-
-    char OBJECT_START = '{';
-    static boolean isObjectStart(char ch){
-        return OBJECT_START == ch;
-    }
-    char OBJECT_END = '}';
-    static boolean isObjectEnd(char ch){
-        return OBJECT_END == ch;
-    }
 
     int PRIMITIVE = 0;
     static boolean isPrimitive(int pointer){
@@ -44,7 +26,12 @@ public interface JsonPointer {
     }
 
     int D_QOUTE = 4;
-    static boolean isDOuqte(int pointer){
+    static boolean isDQuote(int pointer){
         return D_QOUTE == pointer;
+    }
+
+    int ESCAPE = 5;
+    static boolean isEscape(int pointer){
+        return ESCAPE == pointer;
     }
 }

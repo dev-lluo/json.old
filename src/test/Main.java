@@ -8,10 +8,12 @@ import top.flyfire.json.resolver.JsonData;
  */
 public class Main {
     public static void main(String[] args){
-        JsonData jsonData = new JsonData("{a:'123'}");
+        JsonData jsonData = new JsonData("{'aadfdf':123}");
         JsonData.JsonDataPeeker peeker = jsonData.peeker();
         if(JsonPointer.isObject(peeker.peek())){
             peeker.startObject();
+            System.out.println(peeker.readProperty());
+            System.out.println(peeker.readValue());
             peeker.endObject();
         }
     }
