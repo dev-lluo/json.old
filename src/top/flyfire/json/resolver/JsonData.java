@@ -6,6 +6,7 @@ import top.flyfire.json.JsonSign;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.resolver.exception.UnExpectStructExpection;
 import top.flyfire.json.type.Json;
+import top.flyfire.json.type.array.JsonArray;
 import top.flyfire.json.type.object.JsonObject;
 import top.flyfire.json.type.primitive.JsonPrimitive;
 
@@ -319,8 +320,19 @@ public class JsonData {
                     }
                     this.endObject();
                     json = jsonObject;
+                }else if(JsonPointer.isArray(pointer)){
+                    JsonArray jsonArray = new JsonArray();
+                    if(this.startArray()) {
+                        do {
+                            jsonArray.add(this.readArrayCell());
+                        }while(this.hasNextArrayElement());
+                    }
+                    this.endArray();
+                    json = jsonArray;
                 }else if(JsonPointer.isPrimitive(pointer)){
                     json = this.readPrimitive();
+                }else{
+                    throw new RuntimeException();
                 }
             }else{
                 throw new UnExpectStructExpection("please insert colon between property and value...");
@@ -342,6 +354,65 @@ public class JsonData {
 
         public void endObject(){
             this.stack.pop(JsonPointer.OBJECT);
+        }
+
+
+        public boolean startArray(){
+            this.roll();
+            this.stack.push(JsonPointer.ARRAY);
+            this.roll();
+            char dest = JsonData.this.value[destPos];
+            this.back();
+            if(JsonSign.isArrayEnd(dest)){
+                return false;
+            }else{
+                return true;
+            }
+        }
+
+        public Json readArrayCell(){
+            Json json = null;
+            int pointer = this.peek();
+            if(JsonPointer.isObject(pointer)){
+                JsonObject jsonObject = new JsonObject();
+                if(this.startObject()) {
+                    do {
+                        jsonObject.set(this.readProperty(), this.readValue());
+                    }while(this.hasNextObjectElement());
+                }
+                this.endObject();
+                json = jsonObject;
+            }else if(JsonPointer.isArray(pointer)){
+                JsonArray jsonArray = new JsonArray();
+                if(this.startArray()) {
+                    do {
+                        jsonArray.add(this.readArrayCell());
+                    }while(this.hasNextArrayElement());
+                }
+                this.endArray();
+                json = jsonArray;
+            }else if(JsonPointer.isPrimitive(pointer)){
+                json = this.readPrimitive();
+            }else{
+                throw new RuntimeException();
+            }
+            return json;
+        }
+
+        public boolean hasNextArrayElement(){
+            this.roll();
+            char dest = JsonData.this.value[destPos];
+            if(JsonSign.isArrayEnd(dest)){
+                return false;
+            }else if(JsonSign.isComma(dest)){
+                return true;
+            }else{
+                throw new UnExpectStructExpection();
+            }
+        }
+
+        public void endArray(){
+            this.stack.pop(JsonPointer.ARRAY);
         }
 
     }

@@ -1,5 +1,6 @@
 package top.flyfire.json.type.array;
 
+import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.type.Json;
 
 import java.util.Collection;
@@ -8,13 +9,44 @@ import java.util.Collection;
  * Created by flyfire[dev.lluo@outlook.com] on 2016/3/6.
  */
 public class JsonArray implements Json {
+    private static final int DEFAULT_CAP = 10;
 
-    public void add(Json json){
+    private static final int DEFAULT_GROWTH = 10;
 
+    private int length;
+
+    private Json[] value;
+
+    public JsonArray() {
+        this.length = 0;
+        this.value = new Json[JsonArray.DEFAULT_CAP];
     }
 
-    public void get(int i){
+    private int increase(){
+        int expect_length = this.length+JsonArray.DEFAULT_GROWTH;
+        if(expect_length>0&&expect_length<=Integer.MAX_VALUE) {
+            Json[] new_container = new Json[expect_length];
+            System.arraycopy(this.value,0,new_container,0,this.length);
+            this.value = new_container;
+            return expect_length;
+        }else{
+            throw new NotEnoughSpaceException();
+        }
+    }
 
+    public void add(Json json){
+        if(this.length==this.value.length) {
+            this.increase();
+        }
+        this.value[this.length++] = json;
+    }
+
+    public Json get(int i){
+        if(i<this.length){
+            return this.value[i];
+        }else{
+            throw new IndexOutOfBoundsException("length:"+this.length+",index:"+i);
+        }
     }
 
 }

@@ -27,10 +27,17 @@ public interface Json {
             json = jsonObject;
         }else if(JsonPointer.isArray(pointer)){
             JsonArray jsonArray = new JsonArray();
+            if(peeker.startArray()){
+                do{
+                    jsonArray.add(peeker.readArrayCell());
+                }while (peeker.hasNextArrayElement());
+            }
+            peeker.endArray();
             json = jsonArray;
+        }else if(JsonPointer.isPrimitive(pointer)){
+            json = peeker.readPrimitive();
         }else{
-            JsonPrimitive jsonPrimitive = new JsonPrimitive();
-            json = jsonPrimitive;
+            throw new RuntimeException();
         }
         return json;
     }

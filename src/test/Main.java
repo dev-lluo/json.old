@@ -10,18 +10,10 @@ import top.flyfire.json.type.object.JsonObject;
  */
 public class Main {
     public static void main(String[] args){
-        JsonData jsonData = new JsonData("{'aadfdf':123,abc:{'aadfdf':123,abc:123}}");
-        JsonData.JsonDataPeeker peeker = jsonData.peeker();
-        if(JsonPointer.isObject(peeker.peek())){
-            JsonObject jsonObject = new JsonObject();
-            if(peeker.startObject()) {
-                do {
-                    jsonObject.set(peeker.readProperty(),peeker.readValue());
-                }while(peeker.hasNextObjectElement());
-            }
-            peeker.endObject();
-
-            System.out.println(jsonObject.get("aadfdf"));
-        }
+        long start  = 0;
+        start = System.currentTimeMillis();
+        Json json = Json.json2Object("{'aadfdf':123,abc:{'aadfdf':123,abc:123},bcd:[123,456]}");
+        System.out.println(System.currentTimeMillis()-start);
+        System.out.println("success!!!");
     }
 }
