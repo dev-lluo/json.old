@@ -5,6 +5,9 @@ import top.flyfire.json.JsonPointer;
 import top.flyfire.json.JsonSign;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.resolver.exception.UnExpectStructExpection;
+import top.flyfire.json.type.Json;
+import top.flyfire.json.type.object.JsonObject;
+import top.flyfire.json.type.primitive.JsonPrimitive;
 
 /**
  * Created by flyfire[dev.lluo@outlook.com] on 2016/3/6.
@@ -33,7 +36,6 @@ public class JsonData {
     public JsonDataPeeker peeker(){
         return new JsonDataPeeker();
     }
-
 
 
     public JsonData append(String jsonString){
@@ -176,8 +178,8 @@ public class JsonData {
         }
 
 
-        public String readPrimitive(){
-            JsonData jsonData = new JsonData();
+        public Json readPrimitive(){
+            JsonPrimitive jsonPrimitive = new JsonPrimitive();
             while(this.destPos<JsonData.this.length) {
                 this.roll();
                 char dest = JsonData.this.value[destPos];
@@ -186,7 +188,7 @@ public class JsonData {
                 if(JsonPointer.isEscape(pointer)){//如果前置指针为转义 ；则判断当前符号能不能进行转义；不能则抛出异常；能则转义拼接
                     if(EscapeUtil.canEsc(dest)){
                         stack.pop(pointer);
-                        jsonData.append(EscapeUtil.esc(dest));
+                        jsonPrimitive.append(EscapeUtil.esc(dest));
                     }else{
                         throw new RuntimeException("unknown escape[\\"+dest+"]");
                     }
@@ -195,29 +197,29 @@ public class JsonData {
                         stack.pop(pointer);
                         break;
                     }else{
-                        jsonData.append(dest);
+                        jsonPrimitive.append(dest);
                     }
                 }else if(JsonPointer.isDQuote(pointer)){//如果前置指针为双引号
                     if(JsonSign.isDQuote(dest)){//且当前目标符号为双引号；则Primitive结束读取;否则拼接
                         stack.pop(pointer);
                         break;
                     }else{
-                        jsonData.append(dest);
+                        jsonPrimitive.append(dest);
                     }
                 }else{
-                    if(jsonData.isEmpty()) {
+                    if(jsonPrimitive.isEmpty()) {
                         if (JsonSign.isSQuote(dest)) {
                             stack.push(JsonPointer.S_QUOTE);
                         } else if (JsonSign.isDQuote(dest)) {
                             stack.push(JsonPointer.D_QOUTE);
                         } else if (JsonSign.isColon(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isObjectEnd(dest)||JsonSign.isArrayStart(dest)||JsonSign.isArrayEnd(dest)) {//Primitive不允许以Json结构关键或转义字符开始
-                            throw new UnExpectStructExpection("primitive["+jsonData+"] start with ["+dest+"] ???");
+                            throw new UnExpectStructExpection("primitive["+jsonPrimitive+"] start with ["+dest+"] ???");
                         } else {
-                            jsonData.append(dest);
+                            jsonPrimitive.append(dest);
                         }
                     }else{
                         if (JsonSign.isSQuote(dest)||JsonSign.isDQuote(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isArrayStart(dest)) {//无结构的Primitive不允许包含Json结构开始关键或转义字符
-                            throw new UnExpectStructExpection("non-struct primitive["+jsonData+"] include ["+dest+"] ???");
+                            throw new UnExpectStructExpection("non-struct primitive["+jsonPrimitive+"] include ["+dest+"] ???");
                         } else if (JsonSign.isComma(dest)) {//无结构的Primitive遇到逗号；标识结束
                             this.back();
                             break;
@@ -225,18 +227,26 @@ public class JsonData {
                             this.back();
                             break;
                         } else {
-                            jsonData.append(dest);
+                            jsonPrimitive.append(dest);
                         }
                     }
                 }
 
             }
-            return jsonData.toString();
+            return jsonPrimitive;
         }
 
-        public void startObject(){
+        public boolean startObject(){
             this.roll();
             this.stack.push(JsonPointer.OBJECT);
+            this.roll();
+            char dest = JsonData.this.value[destPos];
+            this.back();
+            if(JsonSign.isObjectEnd(dest)){
+                return false;
+            }else{
+                return true;
+            }
         }
 
         public String readProperty(){
@@ -294,25 +304,28 @@ public class JsonData {
             return jsonData.toString();
         }
 
-        public String readValue(){
-            JsonData jsonData = new JsonData();
+        public Json readValue(){
+            Json json = null;
             this.roll();
             char dest = JsonData.this.value[destPos];
             if(JsonSign.isColon(dest)){
                 int pointer = this.peek();
                 if(JsonPointer.isObject(pointer)){
-                    this.startObject();
-                    System.out.println(this.readProperty());
-                    System.out.println(this.readValue());
+                    JsonObject jsonObject = new JsonObject();
+                    if(this.startObject()) {
+                        do {
+                            jsonObject.set(this.readProperty(), this.readValue());
+                        }while(this.hasNextObjectElement());
+                    }
                     this.endObject();
+                    json = jsonObject;
                 }else if(JsonPointer.isPrimitive(pointer)){
-                    System.out.println(this.readPrimitive());
+                    json = this.readPrimitive();
                 }
             }else{
                 throw new UnExpectStructExpection("please insert colon between property and value...");
             }
-
-            return jsonData.toString();
+            return json;
         }
 
         public boolean hasNextObjectElement(){
