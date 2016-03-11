@@ -196,6 +196,7 @@ public class JsonData {
                 }else if(JsonPointer.isSQuote(pointer)){//如果前置指针为单引号
                     if(JsonSign.isSQuote(dest)){//且当前目标符号为单引号；则Primitive结束读取;否则拼接
                         stack.pop(pointer);
+                        jsonPrimitive.append(dest);
                         break;
                     }else{
                         jsonPrimitive.append(dest);
@@ -203,6 +204,7 @@ public class JsonData {
                 }else if(JsonPointer.isDQuote(pointer)){//如果前置指针为双引号
                     if(JsonSign.isDQuote(dest)){//且当前目标符号为双引号；则Primitive结束读取;否则拼接
                         stack.pop(pointer);
+                        jsonPrimitive.append(dest);
                         break;
                     }else{
                         jsonPrimitive.append(dest);
@@ -211,8 +213,10 @@ public class JsonData {
                     if(jsonPrimitive.isEmpty()) {
                         if (JsonSign.isSQuote(dest)) {
                             stack.push(JsonPointer.S_QUOTE);
+                            jsonPrimitive.append(dest);
                         } else if (JsonSign.isDQuote(dest)) {
                             stack.push(JsonPointer.D_QOUTE);
+                            jsonPrimitive.append(dest);
                         } else if (JsonSign.isColon(dest)||JsonSign.isEscape(dest)||JsonSign.isObjectStart(dest)||JsonSign.isObjectEnd(dest)||JsonSign.isArrayStart(dest)||JsonSign.isArrayEnd(dest)) {//Primitive不允许以Json结构关键或转义字符开始
                             throw new UnExpectStructExpection("primitive["+jsonPrimitive+"] start with ["+dest+"] ???");
                         } else {

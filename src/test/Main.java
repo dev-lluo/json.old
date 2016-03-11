@@ -12,8 +12,10 @@ public class Main {
     public static void main(String[] args){
         long start  = 0;
         start = System.currentTimeMillis();
-        Json json = Json.json2Object("{'aadfdf':123,abc:{'aadfdf':123,abc:123},bcd:[123,456]}");
+        Json json = Json.json2Object("{'aadfdf':\"123\",abc:{'aadfdf':123,abc:123},bcd:[123,456]}");
         System.out.println(System.currentTimeMillis()-start);
+        System.out.println(((JsonObject)json).get("aadfdf"));
+        System.out.println(((JsonObject)json).get("abc"));
         System.out.println("success!!!");
     }
 }
