@@ -19,18 +19,18 @@ public class JsonData {
 
     private static final int DEFAULT_GROWTH = 500;
 
-    private char[] value;
+    private char[] container;
 
     private int length;
 
     public JsonData(){
-        this.value = new char[JsonData.DEFAULT_CAP];
+        this.container = new char[JsonData.DEFAULT_CAP];
         this.length = 0;
     }
 
     public JsonData(String jsonString){
-        this.value = jsonString.toCharArray();
-        this.length = this.value.length;
+        this.container = jsonString.toCharArray();
+        this.length = this.container.length;
         this.increase();
     }
 
@@ -46,7 +46,7 @@ public class JsonData {
     }
 
     public JsonData append(JsonData jsonData){
-        this.append(jsonData.value);
+        this.append(jsonData.container);
         return this;
     }
 
@@ -70,7 +70,7 @@ public class JsonData {
 
     @Override
     public String toString() {
-        return new String(this.value,0,this.length);
+        return new String(this.container,0,this.length);
     }
 
     /*
@@ -79,12 +79,12 @@ public class JsonData {
          */
     private void append(char[] buffer){
         int require = buffer.length;
-        int free = this.value.length - this.length();
+        int free = this.container.length - this.length();
         while(free<=require){
             free = this.increase() - this.length();
             System.out.println(free<=require);
         }
-        System.arraycopy(buffer,0,this.value,this.length,buffer.length);
+        System.arraycopy(buffer,0,this.container,this.length,buffer.length);
         this.length = this.length+buffer.length;
     }
 
@@ -97,11 +97,11 @@ public class JsonData {
      * return the expect length
      */
     private int increase(){
-        int expect_length = this.value.length+JsonData.DEFAULT_GROWTH;
+        int expect_length = this.container.length+JsonData.DEFAULT_GROWTH;
         if(expect_length>0&&expect_length<=Integer.MAX_VALUE) {
             char[] new_container = new char[expect_length];
-            System.arraycopy(this.value,0,new_container,0,this.length);
-            this.value = new_container;
+            System.arraycopy(this.container,0,new_container,0,this.length);
+            this.container = new_container;
             return expect_length;
         }else{
             throw new NotEnoughSpaceException(this);
@@ -158,7 +158,7 @@ public class JsonData {
 
         public int peek(){
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             if(JsonSign.isArrayStart(dest)){
                 this.back();
                 return JsonPointer.ARRAY;
@@ -184,7 +184,7 @@ public class JsonData {
             JsonPrimitive jsonPrimitive = new JsonPrimitive();
             while(this.destPos<JsonData.this.length) {
                 this.roll();
-                char dest = JsonData.this.value[destPos];
+                char dest = JsonData.this.container[destPos];
                 int pointer = stack.peek();
 
                 if(JsonPointer.isEscape(pointer)){//如果前置指针为转义 ；则判断当前符号能不能进行转义；不能则抛出异常；能则转义拼接
@@ -246,7 +246,7 @@ public class JsonData {
             this.roll();
             this.stack.push(JsonPointer.OBJECT);
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             this.back();
             if(JsonSign.isObjectEnd(dest)){
                 return false;
@@ -259,7 +259,7 @@ public class JsonData {
             JsonData jsonData = new JsonData();
             while(this.destPos<JsonData.this.length) {
                 this.roll();
-                char dest = JsonData.this.value[destPos];
+                char dest = JsonData.this.container[destPos];
                 int pointer = stack.peek();
 
                 if(JsonPointer.isEscape(pointer)){//如果前置指针为转义 ；则判断当前符号能不能进行转义；不能则抛出异常；能则转义拼接
@@ -313,7 +313,7 @@ public class JsonData {
         public Json readValue(){
             Json json = null;
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             if(JsonSign.isColon(dest)){
                 int pointer = this.peek();
                 if(JsonPointer.isObject(pointer)){
@@ -347,7 +347,7 @@ public class JsonData {
 
         public boolean hasNextObjectElement(){
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             if(JsonSign.isObjectEnd(dest)){
                 return false;
             }else if(JsonSign.isComma(dest)){
@@ -366,7 +366,7 @@ public class JsonData {
             this.roll();
             this.stack.push(JsonPointer.ARRAY);
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             this.back();
             if(JsonSign.isArrayEnd(dest)){
                 return false;
@@ -406,7 +406,7 @@ public class JsonData {
 
         public boolean hasNextArrayElement(){
             this.roll();
-            char dest = JsonData.this.value[destPos];
+            char dest = JsonData.this.container[destPos];
             if(JsonSign.isArrayEnd(dest)){
                 return false;
             }else if(JsonSign.isComma(dest)){
