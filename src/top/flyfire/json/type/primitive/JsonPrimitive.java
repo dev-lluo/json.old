@@ -66,9 +66,9 @@ public class JsonPrimitive implements Json {
      */
     private void append(char[] buffer){
         int require = buffer.length;
-        int free = this.value.length - this.length;
+        int free = this.value.length - this.length();
         while(free<=require){
-            free = this.increase()-require;
+            free = this.increase()-this.length();
         }
         System.arraycopy(buffer,0,this.value,this.length,buffer.length);
         this.length = this.length+buffer.length;
@@ -83,7 +83,7 @@ public class JsonPrimitive implements Json {
      * return the expect length
      */
     private int increase(){
-        int expect_length = this.length+JsonPrimitive.DEFAULT_GROWTH;
+        int expect_length = this.value.length+JsonPrimitive.DEFAULT_GROWTH;
         if(expect_length>0&&expect_length<=Integer.MAX_VALUE) {
             char[] new_container = new char[expect_length];
             System.arraycopy(this.value,0,new_container,0,this.length);
