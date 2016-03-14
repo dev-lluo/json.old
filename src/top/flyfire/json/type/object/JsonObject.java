@@ -163,16 +163,20 @@ public class JsonObject implements Json {
                     for(int i = 0;i<this.entries.length;i++){
                         Entry thisEntry = this.entries[i];
                         Entry anotherEntry = anotherObject.entries[i];
-                        if((thisEntry!=null&&anotherEntry==null)||(thisEntry==null&&anotherEntry!=null)){
+                        if(thisEntry==null&&thisEntry==anotherEntry){
+                            continue;
+                        }else if((thisEntry!=null&&anotherEntry==null)||(thisEntry==null&&anotherEntry!=null)){
                             return false;
                         }else if(thisEntry.getSize()!=anotherEntry.getSize()){
                             return false;
                         }else {
                             do{
-                               if(!thisEntry.equals(anotherEntry)) {
+                                if(thisEntry==null&&thisEntry==anotherEntry){
+                                    continue;
+                                }else if(!thisEntry.equals(anotherEntry)) {
                                    return false;
-                               }
-                            }while(((thisEntry=thisEntry.getNext())!=null)&&((anotherEntry=anotherEntry.getNext())!=null));
+                                }
+                            }while(((thisEntry=thisEntry.getNext())!=null)||((anotherEntry=anotherEntry.getNext())!=null));
                         }
                     }
                     return true;

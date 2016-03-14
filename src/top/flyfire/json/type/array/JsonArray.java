@@ -72,7 +72,7 @@ public class JsonArray implements Json {
 
     @Override
     public boolean equals(Object obj) {
-        if(obj==null||(obj instanceof  JsonArray)){
+        if(obj==null||!(obj instanceof  JsonArray)){
             return false;
         }else{
             if(this==obj){
@@ -85,7 +85,9 @@ public class JsonArray implements Json {
                     for(int i = 0,len = this.length();i<len;i++){
                         Json thisCell = this.value[i];
                         Json anotherCell = anotherArray.value[i];
-                        if((thisCell==null&&anotherCell!=null)||(thisCell!=null&&anotherCell==null)){
+                        if(thisCell==null&&thisCell==anotherCell){
+                            continue;
+                        }else if((thisCell==null&&anotherCell!=null)||(thisCell!=null&&anotherCell==null)){
                             return false;
                         }else if(!thisCell.equals(anotherCell)){
                             return false;
