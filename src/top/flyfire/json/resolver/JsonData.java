@@ -247,10 +247,10 @@ public class JsonData {
             this.stack.push(JsonPointer.OBJECT);
             this.roll();
             char dest = JsonData.this.container[destPos];
-            this.back();
             if(JsonSign.isObjectEnd(dest)){
                 return false;
             }else{
+                this.back();
                 return true;
             }
         }
@@ -367,10 +367,10 @@ public class JsonData {
             this.stack.push(JsonPointer.ARRAY);
             this.roll();
             char dest = JsonData.this.container[destPos];
-            this.back();
             if(JsonSign.isArrayEnd(dest)){
                 return false;
             }else{
+                this.back();
                 return true;
             }
         }
