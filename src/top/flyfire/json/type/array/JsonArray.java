@@ -1,5 +1,6 @@
 package top.flyfire.json.type.array;
 
+import top.flyfire.json.resolver.JsonData;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.type.Json;
 
@@ -49,4 +50,19 @@ public class JsonArray implements Json {
         }
     }
 
+    @Override
+    public String toString() {
+        if(this.length==0){
+            return "[]";
+        }else {
+            JsonData data = new JsonData("[");
+            data.append(this.value[0].toString());
+            for (int i = 1; i < this.length; i++) {
+                data.append(',');
+                data.append(this.value[i].toString());
+            }
+            data.append("]");
+            return data.toString();
+        }
+    }
 }

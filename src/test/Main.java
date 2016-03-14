@@ -16,6 +16,7 @@ public class Main {
         System.out.println(System.currentTimeMillis()-start);
         System.out.println(((JsonObject)json).get("aadfdf"));
         System.out.println(((JsonObject)json).get("abc"));
+        System.out.println(((JsonObject)json).get("bcd"));
         System.out.println("success!!!");
     }
 }

@@ -1,6 +1,7 @@
 package top.flyfire.json.type.object;
 
 import top.flyfire.json.JsonException;
+import top.flyfire.json.resolver.JsonData;
 import top.flyfire.json.resolver.exception.NotEnoughSpaceException;
 import top.flyfire.json.type.Json;
 
@@ -80,7 +81,7 @@ public class JsonObject implements Json {
             this.value = value;
             this.next = next;
             if(this.next==null){
-                this.size = 0;
+                this.size = 1;
             }else{
                 this.size = ++next.size;
             }
@@ -113,6 +114,34 @@ public class JsonObject implements Json {
         public void setProperty(String property) {
             this.property = property;
         }
+
+        @Override
+        public String toString() {
+            JsonData data = new JsonData(this.property);
+            data.append(':');
+            data.append(this.value.toString());
+            if(this.next!=null)data.append(',');
+            return data.toString();
+        }
     }
 
+    @Override
+    public String toString() {
+        if(this.entries.length==0){
+            return "{}";
+        }else{
+            JsonData data = new JsonData("{");
+            for(int i = 0;i<this.entries.length;i++){
+                Entry entry = this.entries[i];
+                if(entry!=null){
+                    if(data.length()>1)data.append(",");
+                    do {
+                        data.append(entry.toString());
+                    }while ((entry=entry.getNext())!=null);
+                }
+            }
+            data.append("}");
+            return data.toString();
+        }
+    }
 }
