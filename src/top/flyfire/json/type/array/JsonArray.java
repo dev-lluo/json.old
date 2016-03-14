@@ -50,6 +50,10 @@ public class JsonArray implements Json {
         }
     }
 
+    public int length(){
+        return this.length;
+    }
+
     @Override
     public String toString() {
         if(this.length==0){
@@ -63,6 +67,33 @@ public class JsonArray implements Json {
             }
             data.append("]");
             return data.toString();
+        }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj==null||(obj instanceof  JsonArray)){
+            return false;
+        }else{
+            if(this==obj){
+                return true;
+            }else{
+                JsonArray anotherArray = (JsonArray)obj;
+                if(anotherArray.length()!=this.length()){
+                    return false;
+                }else{
+                    for(int i = 0,len = this.length();i<len;i++){
+                        Json thisCell = this.value[i];
+                        Json anotherCell = anotherArray.value[i];
+                        if((thisCell==null&&anotherCell!=null)||(thisCell!=null&&anotherCell==null)){
+                            return false;
+                        }else if(!thisCell.equals(anotherCell)){
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            }
         }
     }
 }

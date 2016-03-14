@@ -94,4 +94,20 @@ public class JsonPrimitive implements Json {
         }
     }
 
+    @Override
+    public boolean equals(Object obj) {
+       if(obj==null||!(obj instanceof JsonPrimitive)){
+           return false;
+       }else{
+           JsonPrimitive anotherPrimitive = (JsonPrimitive)obj;
+           if(this.length()!=anotherPrimitive.length()){
+               return false;
+           }else{
+               for(int i= 0,len = this.length();i<len;i++){
+                   if(this.value[i]!=anotherPrimitive.value[i])return false;
+               }
+               return true;
+           }
+       }
+    }
 }

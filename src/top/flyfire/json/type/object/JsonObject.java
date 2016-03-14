@@ -116,12 +116,70 @@ public class JsonObject implements Json {
         }
 
         @Override
+        public boolean equals(Object obj) {
+            if(obj==null||!(obj instanceof Entry)){
+                return false;
+            }else{
+                if(obj==this){
+                    return true;
+                }else{
+                    Entry  anotherEntry = ((Entry) obj);
+                    if(this.getProperty().equals(anotherEntry.getProperty())){
+                        if(this.getValue()==null&&(anotherEntry.getValue()==null)){
+                            return true;
+                        }else if(this.getValue()!=null&&this.getValue().equals(anotherEntry.getValue())){
+                            return true;
+                        }else{
+                            return false;
+                        }
+                    }else{
+                        return false;
+                    }
+                }
+            }
+        }
+
+        @Override
         public String toString() {
             JsonData data = new JsonData(this.property);
             data.append(':');
             data.append(this.value.toString());
             if(this.next!=null)data.append(',');
             return data.toString();
+        }
+    }
+
+
+    @Override
+    public boolean equals(Object obj) {
+        if(obj==null||!(obj instanceof JsonObject)){
+            return false;
+        }else {
+            if (obj == this) {
+                return true;
+            }else{
+                JsonObject anotherObject = (JsonObject)obj;
+                if(this.entries.length==anotherObject.entries.length){
+                    for(int i = 0;i<this.entries.length;i++){
+                        Entry thisEntry = this.entries[i];
+                        Entry anotherEntry = anotherObject.entries[i];
+                        if((thisEntry!=null&&anotherEntry==null)||(thisEntry==null&&anotherEntry!=null)){
+                            return false;
+                        }else if(thisEntry.getSize()!=anotherEntry.getSize()){
+                            return false;
+                        }else {
+                            do{
+                               if(!thisEntry.equals(anotherEntry)) {
+                                   return false;
+                               }
+                            }while(((thisEntry=thisEntry.getNext())!=null)&&((anotherEntry=anotherEntry.getNext())!=null));
+                        }
+                    }
+                    return true;
+                }else{
+                    return false;
+                }
+            }
         }
     }
 
